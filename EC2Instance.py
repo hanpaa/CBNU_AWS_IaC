@@ -14,13 +14,25 @@ logger = logging.getLogger(__name__)
 class EC2Instance:
     def __init__(self):
         """
-        :param ec2Resource: boto3 Amazon EC2 resource. 저수준 EC2 서비스의 action을 감싸기 위한
-        고수준 boto3 리소스.
-        :param instance: boto3 Instance object . instance 정보들을 감싸기 위한
-        고수준 object
+
         """
         self.ec2Resource = boto3.resource('ec2')
+        self.client = boto3.client('ec2')
+        self.InstanceId = None
+        self.ImageId = None
+        self.InstanceType = None
+        self.PublicIpAddress = None
+        self.Architecture = None
+        self.State = None
 
+
+    def getALLInstanceDescribe(self):
+        """
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.describe_instances
+        :return: response
+        """
+
+        return self.client.describe_instances()
 
     def displayInstance(self, indent=1):
         """
@@ -46,6 +58,9 @@ class EC2Instance:
         """
         새 ec2인스턴스를 생성함.
         :param image: Amazon Machine Image(AMI) 에 대응하는 boto3 Image object
+                      instance의 스토리지 정보와 OS종류등의 정보를 가지고있음.
+        or
+        :param imageID: Amazon Machine Image(AMI) 에 대응하는 boto3 Image object
                       instance의 스토리지 정보와 OS종류등의 정보를 가지고있음.
         :param instanceType: 인스턴스의 타입. 예) 't2.micro' vCPU와 memory 용량 등이 다름.
 
@@ -81,26 +96,65 @@ class EC2Instance:
 
     def terminateInstance(self):
 
-        if self.instance is None:
+        if self.InstanceId is None:
             print("There is no Instance to terminate.")
             return
 
-        try:
-            instanceID = self.instance.id
-            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Instance.terminate
-            self.instance.terminate()
-            self.isntance.wait_until_terminate()
-            self.instance = None
-        except ClientError as err:
-            logging.error(
-                "Couldn't terminate instance %s. Here's why: %s: %s", instanceID,
-                err.response['Error']['Code'], err.response['Error']['Message'])
-            raise
+        if self.State == "terminated":
+            print("the instance is already terminated")
+        else:
+            response = self.client.terminate_instances(
+                InstanceIds=[
+                    self.InstanceId
+                ]
+            )
+
+            print("the instance state is now " + response.get('TerminatingInstances')[0].get('CurrentState').get('Name'))
+
+
+    def stopInstance(self):
+
+        if self.InstanceId is None:
+            print("There is no Instance to stop.")
+            return
+
+        if self.State == "stopped":
+            print("the instance is already stopped")
+        elif self.State == "stopping":
+            print("the instance is already stopping")
+        else:
+            response = self.client.stop_instances(
+                InstanceIds=[
+                    self.InstanceId
+                ]
+            )
+
+            print("the instance state is now " + response.get('StoppingInstances')[0].get('CurrentState').get('Name'))
+
+
+    def startInstance(self):
+
+        if self.InstanceId is None:
+            print("There is no Instance to starting.")
+            return
+
+        if self.State == "running":
+            print("the instance is already running")
+        elif self.State == "pending":
+            print("the instance is already pending")
+        else:
+            response = self.client.start_instances(
+                InstanceIds=[
+                    self.InstanceId
+                ]
+            )
+            print("the instance state is now " + response.get('StartingInstances')[0].get('CurrentState').get('Name'))
+
 
     def instanceLoad(self, instanceInfo):
-        self.InstanceId = instanceInfo['InstanceId']
-        self.ImageId = instanceInfo['ImageId']
-        self.InstanceType = instanceInfo['InstanceType']
-        self.PublicIpAddress = instanceInfo['PublicIpAddress']
-        self.Architecture = instanceInfo['Architecture']
-        self.State = instanceInfo['State']['Name']
+        self.InstanceId = instanceInfo.get('InstanceId')
+        self.ImageId = instanceInfo.get('ImageId')
+        self.InstanceType = instanceInfo.get('InstanceType')
+        self.PublicIpAddress = instanceInfo.get('PublicIpAddress')
+        self.Architecture = instanceInfo.get('Architecture')
+        self.State = instanceInfo.get('State').get('Name')
