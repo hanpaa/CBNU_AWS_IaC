@@ -17,21 +17,23 @@ class AWSMain:
         self.keyPairList = []
         self.mainMenu()
 
-
-        
     def mainMenu(self):
         state = True
         self.showMenu()
 
-        print("Enter an integer: ")
+        print("Select Menu Enter an integer: ")
         inputNumber = input()
 
         while(state):
 
             if inputNumber == "1":
                 self.describeInstances()
+            elif inputNumber == "2":
+                self.describeAvailableZones()
             elif inputNumber == "3":
                 self.startInstanceMenu()
+            elif inputNumber == "4":
+                self.describeAvailableRegions()
             elif inputNumber == "5":
                 self.stopInstanceMenu()
             elif inputNumber == "6":
@@ -48,7 +50,7 @@ class AWSMain:
             elif inputNumber == "99":
                 exit(0)
 
-            print("Enter an integer: ")
+            print("Select Menu Enter an integer: ")
             inputNumber = input()
 
     def showMenu(self):
@@ -94,6 +96,33 @@ class AWSMain:
             print("image index: " + str(index))
             image.displayAMI()
             print("------------------------------------------------------------")
+    def describeAvailableZones(self):
+        """
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.describe_availability_zones
+        :return:
+        """
+        print("------------------------------------------------------------")
+        print("Available Zone")
+        client = boto3.client('ec2')
+        response = client.describe_availability_zones()
+        for zone in response['AvailabilityZones']:
+            print("Zone name : " + zone.get('ZoneName'))
+
+        print("------------------------------------------------------------")
+
+    def describeAvailableRegions(self):
+        """
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ec2.html#EC2.Client.describe_regions
+        :return:
+        """
+        print("------------------------------------------------------------")
+        print("Available Region")
+        client = boto3.client('ec2')
+        response = client.describe_regions()
+        for zone in response['Regions']:
+            print("Region name : " + zone.get('RegionName'))
+
+        print("------------------------------------------------------------")
 
     def loadImageList(self):
         self.imageList.clear()
