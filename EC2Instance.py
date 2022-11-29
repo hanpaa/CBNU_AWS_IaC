@@ -54,7 +54,8 @@ class EC2Instance:
                 err.response['Error']['Code'], err.response['Error']['Message'])
             raise
 
-    def createInstance(self,  imageID = "ami-07cc74f198bb9e86a", instanceType = 't2.micro',securityGroup = None):
+    def createInstance(self,  imageID = "ami-0b8cb09bfa67f921f"\
+                       , instanceType = 't2.micro',securityGroup = None):
         """
         새 ec2인스턴스를 생성함.
         :param image: Amazon Machine Image(AMI) 에 대응하는 boto3 Image object
@@ -62,6 +63,7 @@ class EC2Instance:
         or
         :param imageID: Amazon Machine Image(AMI) 에 대응하는 boto3 Image object
                       instance의 스토리지 정보와 OS종류등의 정보를 가지고있음.
+                      default : ami-0b8cb09bfa67f921f condor slave image
         :param instanceType: 인스턴스의 타입. 예) 't2.micro' vCPU와 memory 용량 등이 다름.
 
         :param securityGroup:  boto3 SecurityGroup Object. instance의 권한그룹과 관련된 object list
@@ -74,6 +76,7 @@ class EC2Instance:
             instanceParams = {
                 'ImageId': imageID, 'InstanceType': instanceType
             }
+            # , 'KeyName': key_pair.name
             if securityGroup is not None:
                 instanceParams['SecurityGroupIds'] = [group.id for group in securityGroup]
             # 옵션과 함께 인스턴스 생성
@@ -122,6 +125,8 @@ class EC2Instance:
             print("the instance is already stopped")
         elif self.State == "stopping":
             print("the instance is already stopping")
+        elif self.State == "terminated":
+            print("the instance is already terminated")
         else:
             response = self.client.stop_instances(
                 InstanceIds=[
@@ -142,6 +147,8 @@ class EC2Instance:
             print("the instance is already running")
         elif self.State == "pending":
             print("the instance is already pending")
+        elif self.State == "terminated":
+            print("the instance is already terminated")
         else:
             response = self.client.start_instances(
                 InstanceIds=[

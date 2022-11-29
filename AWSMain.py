@@ -1,3 +1,8 @@
+"""
+@author 최제현
+@date 2022/11/20
+AWS 과제 인스턴스 제어 main 클래스
+"""
 import boto3
 
 from EC2Instance import EC2Instance
@@ -41,6 +46,8 @@ class AWSMain:
             elif inputNumber == "6":
                 self.ec2Instance.createInstance()
                 self.loadInstanceList()
+            elif inputNumber == "99":
+                exit(0)
 
     def describeInstances(self):
 
