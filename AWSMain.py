@@ -4,6 +4,7 @@
 AWS 과제 인스턴스 제어 main 클래스
 """
 import boto3
+import paramiko
 
 from EC2Instance import EC2Instance
 from AMI import AMI
@@ -45,6 +46,8 @@ class AWSMain:
                 self.describeImages()
             elif inputNumber == "9":
                 self.terminateInstanceMenu()
+            elif inputNumber == "0":
+                self.getCondorStatus()
             elif inputNumber == "98":
                 inputNumber = self.showMenu()
             elif inputNumber == "99":
@@ -63,7 +66,7 @@ class AWSMain:
         print("  3. start instance               4. available regions      ")
         print("  5. stop instance                6. create instance        ")
         print("  7. reboot instance              8. list images            ")
-        print("  9. terminate(delete) instance  10. Show Menu              ")
+        print("  9. terminate(delete) instance   0. condor_status          ")
         print("  98. Show Menu                  99. quit                   ")
         print("------------------------------------------------------------")
 
@@ -191,6 +194,38 @@ class AWSMain:
         except ValueError:
             print("Please enter a number, not a string.")
             return None
+
+    def getCondorStatus(self):
+        self.loadInstanceList()
+        for ec2 in self.instanceList:
+            if ec2.name == "master_node_centos" and\
+                    ec2.State == "running":
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                pem = paramiko.RSAKey.from_private_key_file( \
+                    './ec2keypair.pem')
+                try:
+                    ssh.connect(hostname=ec2.instance.public_ip_address,
+                                username="centos", pkey=pem)
+                    stdin, stdout, stderr = ssh.exec_command("condor_status")
+                    # response = ec2.instance.console_output(
+                    #     Latest=True
+                    # )
+                    # print(response)
+                    print("------------------------------------------------------------")
+                    lines = stdout.readlines()
+                    for line in lines:
+                        if line != "\n":
+                            print(line)
+                    print("------------------------------------------------------------")
+
+                except Exception as e:
+                    print("ssh connect error!")
+                    print(e)
+                    return
+
+
 
 if __name__ == '__main__':
     # Retrieve the list of existing buckets

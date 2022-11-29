@@ -20,6 +20,7 @@ class EC2Instance:
         self.client = boto3.client('ec2')
         self.InstanceId = None
         self.instance = None
+        self.name = None
 
 
 
@@ -49,12 +50,7 @@ class EC2Instance:
         print(f"{ind}ID: {self.instance.instance_id}")
         print(f"{ind}Image ID: {self.instance.image_id}")
         print(f"{ind}Image name: {self.instance.image.name}")
-        if self.instance.tags is not None:
-            for tag in self.instance.tags:
-                if(tag.get('Key') == 'Name'):
-                    print(f"{ind}instance Name: {tag.get('Value')}")
-        else:
-            print(f"{ind}instance Name: None")
+        print(f"{ind}instance Name: {self.name}")
         print(f"{ind}Key Name: {self.instance.key_name}")
         print(f"{ind}Instance type: {self.instance.instance_type}")
         print(f"{ind}Public IP: {self.instance.public_ip_address}")
@@ -191,4 +187,10 @@ class EC2Instance:
         self.instance = self.ec2Resource.Instance(self.InstanceId)
 
         self.State = self.instance.state.get('Name')
+
+        # instance 이름 저장.
+        if self.instance.tags is not None:
+            for tag in self.instance.tags:
+                if(tag.get('Key') == 'Name'):
+                    self.name = tag.get('Value')
 
