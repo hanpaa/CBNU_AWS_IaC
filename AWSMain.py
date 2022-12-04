@@ -198,8 +198,10 @@ class AWSMain:
     def getCondorStatus(self):
         self.loadInstanceList()
         for ec2 in self.instanceList:
-            if ec2.name == "master_node_centos" and\
-                    ec2.State == "running":
+            if ec2.name == "master_node_centos":
+                if ec2.State != "running":
+                    print("master node is not running now.")
+                    return
                 ssh = paramiko.SSHClient()
                 ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
@@ -219,13 +221,11 @@ class AWSMain:
                         if line != "\n":
                             print(line)
                     print("------------------------------------------------------------")
-
+                    return
                 except Exception as e:
                     print("ssh connect error!")
                     print(e)
                     return
-
-
 
 if __name__ == '__main__':
     # Retrieve the list of existing buckets
